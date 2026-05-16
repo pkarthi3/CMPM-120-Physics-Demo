@@ -16,11 +16,19 @@ class Level1 extends Phaser.Scene {
         this.lilypads.create(100, 550, 'lilypad').setScale(0.1).refreshBody();
         this.lilypads.create(300, 400, 'lilypad').setScale(0.1).refreshBody();
         this.lilypads.create(400, 250, 'lilypad').setScale(0.1).refreshBody();
-        this.goal = this.physics.add.image(500, 0, 'goal');
+        this.goal = this.physics.add.image(500, 100, 'goal');
         this.goal.setScale(0.1);
+        this.goal.body.setSize(this.goal.body.width, this.goal.body.halfHeight);
+        this.goal.body.setOffset(0, this.goal.body.height);
         this.goal.body.allowGravity = false;
+        this.goal.body.setImmovable(true);
 
         this.physics.add.collider(this.player, this.lilypads);
+        this.physics.add.collider(this.player, this.goal, () => {
+            if (this.player.body.touching.down && this.player.body.y < this.goal.body.y) {
+                this.add.text(50, 50, 'yay!!');
+            }
+        });
 
         //based on example solution on labs.phaser.io
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -48,6 +56,7 @@ class Level1 extends Phaser.Scene {
             this.player.body.y = 450;
             this.player.setVelocityY(0);
         }
+
     }
 }
 
@@ -59,7 +68,7 @@ let config = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 150 },
+            gravity: { y: 200 },
             debug: true,
         }
     },
