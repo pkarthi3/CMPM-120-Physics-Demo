@@ -11,6 +11,10 @@ class Level1 extends Phaser.Scene {
         this.load.image('goal', 'lilypadgoal.png');
     }
     create() {
+        score = 0;
+        this.endTime = 0;
+        this.prevTime = this.time.now;
+
         this.player = this.physics.add.image(400, 400, 'frog');
         this.player.setScale(0.05);
 
@@ -36,7 +40,6 @@ class Level1 extends Phaser.Scene {
         this.coins.create(300, 100, 'coin').setScale(0.01).refreshBody();
         this.coins.create(450, 150, 'coin').setScale(0.01).refreshBody();
         this.coins.create(650, 325, 'coin').setScale(0.01).refreshBody();
-        this.coins.create(100, 75, 'coin').setScale(0.01).refreshBody();
         this.coins.create(600, 50, 'coin').setScale(0.01).refreshBody();
 
 
@@ -50,16 +53,17 @@ class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.player, this.lilypads);
         this.physics.add.collider(this.player, this.goal, () => {
             if (this.player.body.touching.down && this.player.body.y < this.goal.body.y) {
-                this.add.text(25, 100, 'yay!!');
+                //based on example solution at https://labs.phaser.io/phaser4-view.html?src=src%5Cscenes%5Cpassing%20data%20to%20a%20scene.js&return=phaser4-index.html%3Fpath%3Dscenes
+                this.scene.start('results1', { endTime: this.endTime});
             }
         });
         
         //based on example solution at https://labs.phaser.io/phaser4-view.html?src=src\physics\arcade\basic%20platform.js&return=phaser4-index.html?path=physics/arcade
         this.physics.add.collider(this.player, this.coins, this.collectCoin, null, this);
 
-        this.add.text(15, 15, 'use left/right arrow keys to move and up to jump; try to reach the goal marked with the flag', { wordWrap: { width: 300 }});
+        this.add.text(15, 15, 'use left/right arrow keys to move and up to jump; try to reach the goal marked with the flag while collecting as many coins as you can', { wordWrap: { width: 300 }}).setColor('#000000');
         //based on example solution at https://labs.phaser.io/phaser4-view.html?src=src%5Cevents%5Clisten%20to%20game%20object%20event.js&return=phaser4-index.html%3Fpath%3Devents
-        this.scoreText = this.add.text(15, 75, '');
+        this.scoreText = this.add.text(15, 100, '').setColor('#000000');
 
         //based on example solution at https://labs.phaser.io/phaser4-view.html?src=src\physics\arcade\basic%20platform.js&return=phaser4-index.html?path=physics/arcade
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -90,14 +94,38 @@ class Level1 extends Phaser.Scene {
 
         //based on example solution at https://labs.phaser.io/phaser4-view.html?src=src%5Cevents%5Clisten%20to%20game%20object%20event.js&return=phaser4-index.html%3Fpath%3Devents
         this.scoreText.setText('score: ' + score);
+        this.endTime = this.time.now - this.prevTime;
 
     }
 
     //based on example solution at https://labs.phaser.io/phaser4-view.html?src=src\physics\arcade\basic%20platform.js&return=phaser4-index.html?path=physics/arcade
-        collectCoin(player, coin){
-            coin.disableBody(true, true);
-            score++;
-        }
+    collectCoin(player, coin){
+        coin.disableBody(true, true);
+        score++;
+    }
+}
+
+class Results1 extends Phaser.Scene {
+    constructor() {
+        super('results1');
+    }
+    //based on example solution at https://labs.phaser.io/phaser4-view.html?src=src%5Cscenes%5Cpassing%20data%20to%20a%20scene.js&return=phaser4-index.html%3Fpath%3Dscenes
+    init(data) {
+        this.finishTime = data.endTime;
+    }
+    preload() {}
+    create() {
+        this.add.text(100, 100, 'Level Complete!', {fontSize: 40}).setColor('#000000');
+        this.add.text(100, 150, 'Time: ' + this.finishTime/1000 + ' seconds', {fontSize: 40}).setColor('#000000');
+        this.add.text(100, 200, 'Score: ' + score, {fontSize: 40}).setColor('#000000');
+        this.retry = this.add.text(100, 500, 'Retry', {fontSize: 40}).setColor('#000000');
+        this.retry.setInteractive();
+        this.retry.on('pointerdown', () => {
+            this.scene.start('level1');
+        });
+        this.next = this.add.text(500, 500, 'Next Level', {fontSize: 40}).setColor('#000000');
+    }
+    update() {}
 }
 
 let config = {
@@ -112,7 +140,7 @@ let config = {
             debug: true,
         }
     },
-    scene: [ Level1 ]
+    scene: [ Level1, Results1 ]
 }
 
 let game = new Phaser.Game(config);
